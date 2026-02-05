@@ -1,0 +1,15 @@
+# PaddleOCR + high-performance inference (CPU)
+# Pin 3.2.2: 3.3.x has OneDNN ConvertPirAttribute bug on CPU
+paddlepaddle==3.2.2
+paddleocr[all]>=3.0.0
+
+# PaddleX serving (Docker uses this)
+paddlex[serving]>=3.2.0
+
+# ocr_api proxy layer
+fastapi>=0.100.0
+uvicorn[standard]>=0.22.0
+python-multipart>=0.0.6
+httpx>=0.24.0
+
+# After pip install, run: paddleocr install_hpi_deps cpu
