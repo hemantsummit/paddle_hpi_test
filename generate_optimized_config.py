@@ -48,29 +48,50 @@ def generate_config(
     print(f"✓ Config generated: {output_path}")
     print("\nTo use this config, ensure it's copied to /app/ocr_config.yaml in the container")
     
-    # Try to update mkldnn_cache_capacity in the YAML if possible
+    # Update all performance settings in the YAML
     try:
         import yaml
         with open(output_path, 'r') as f:
             config = yaml.safe_load(f)
         
-        # Update cache capacity if config structure supports it
-        if 'Global' in config:
-            config['Global']['mkldnn_cache_capacity'] = mkldnn_cache
-        elif isinstance(config, dict):
-            # Try to find where to set it
-            for key in config:
-                if isinstance(config[key], dict) and 'mkldnn' in str(config[key]).lower():
-                    config[key]['mkldnn_cache_capacity'] = mkldnn_cache
+        updated = False
         
-        with open(output_path, 'w') as f:
-            yaml.dump(config, f, default_flow_style=False)
-        print(f"✓ Updated mkldnn_cache_capacity to {mkldnn_cache}")
+        # Update Global section
+        if 'Global' in config:
+            if config['Global'].get('cpu_threads') != cpu_threads:
+                config['Global']['cpu_threads'] = cpu_threads
+                updated = True
+            if config['Global'].get('enable_mkldnn') != enable_mkldnn:
+                config['Global']['enable_mkldnn'] = enable_mkldnn
+                updated = True
+            if config['Global'].get('mkldnn_cache_capacity') != mkldnn_cache:
+                config['Global']['mkldnn_cache_capacity'] = mkldnn_cache
+                updated = True
+        
+        # Update Det and Rec sections
+        for section_name in ['Det', 'Rec', 'Cls']:
+            if section_name in config and isinstance(config[section_name], dict):
+                if config[section_name].get('cpu_threads') != cpu_threads:
+                    config[section_name]['cpu_threads'] = cpu_threads
+                    updated = True
+                if config[section_name].get('enable_mkldnn') != enable_mkldnn:
+                    config[section_name]['enable_mkldnn'] = enable_mkldnn
+                    updated = True
+                if config[section_name].get('mkldnn_cache_capacity') != mkldnn_cache:
+                    config[section_name]['mkldnn_cache_capacity'] = mkldnn_cache
+                    updated = True
+        
+        if updated:
+            with open(output_path, 'w') as f:
+                yaml.dump(config, f, default_flow_style=False, sort_keys=False)
+            print(f"✓ Updated config: cpu_threads={cpu_threads}, mkldnn_cache={mkldnn_cache}, enable_mkldnn={enable_mkldnn}")
+        else:
+            print(f"✓ Config values already correct")
     except ImportError:
-        print("Note: Install PyYAML to auto-update mkldnn_cache_capacity in YAML")
+        print("Warning: PyYAML not available, config values may not be set correctly")
     except Exception as e:
-        print(f"Note: Could not update mkldnn_cache_capacity automatically: {e}")
-        print(f"  Set PADDLE_MKLDNN_CACHE_CAPACITY={mkldnn_cache} environment variable instead")
+        print(f"Warning: Could not update config automatically: {e}")
+        print(f"  Config will be updated at runtime via update_config.py")
 
 
 if __name__ == "__main__":

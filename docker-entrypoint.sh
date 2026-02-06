@@ -24,6 +24,11 @@ export PADDLE_MKLDNN_CACHE_CAPACITY=$MKLDNN_CACHE
 if [ -f /app/ocr_config.yaml ]; then
   PIPELINE_ARG="/app/ocr_config.yaml"
   echo "Using custom config: /app/ocr_config.yaml"
+  # Update config with current environment variables
+  echo "Updating config with performance settings..."
+  python update_config.py /app/ocr_config.yaml || echo "Warning: Could not update config file"
+  # Verify config (for debugging)
+  python verify_config.py /app/ocr_config.yaml || true
 else
   PIPELINE_ARG="OCR"
   echo "Using default OCR pipeline"

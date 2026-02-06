@@ -46,6 +46,8 @@ ENV PADDLE_MKLDNN_CACHE_CAPACITY=20
 
 COPY ocr_api.py .
 COPY generate_optimized_config.py .
+COPY update_config.py .
+COPY verify_config.py .
 COPY docker-entrypoint.sh /app/
 RUN chmod +x /app/docker-entrypoint.sh
 
