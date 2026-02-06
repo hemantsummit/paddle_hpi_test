@@ -22,19 +22,30 @@ RUN paddleocr install_hpi_deps cpu || true
 RUN paddlex --install serving
 
 # OCR config: disable doc orientation/unwarping/textline_ori (keep server models)
+# Performance tuning: can be overridden via environment variables
 RUN python -c "\
 from paddleocr import PaddleOCR; \
+import os; \
+cpu_threads = int(os.environ.get('PADDLE_CPU_THREADS', '10')); \
+enable_mkldnn = os.environ.get('FLAGS_use_mkldnn', '1') == '1'; \
 p = PaddleOCR( \
     use_doc_orientation_classify=False, \
     use_doc_unwarping=False, \
     use_textline_orientation=False, \
+    cpu_threads=cpu_threads, \
+    enable_mkldnn=enable_mkldnn, \
 ); \
 p.export_paddlex_config_to_yaml('/app/ocr_config.yaml')"
 
-# Disable OneDNN to avoid ConvertPirAttribute2RuntimeAttribute bug (Paddle 3.3+)
-ENV FLAGS_use_mkldnn=0
+# Performance tuning defaults (can be overridden at runtime)
+# Note: FLAGS_use_mkldnn=0 was set to avoid Paddle 3.3+ bug, but PaddleX may override
+# Enable MKLDNN for better performance on Intel CPUs (test if stable)
+ENV FLAGS_use_mkldnn=1
+ENV PADDLE_CPU_THREADS=10
+ENV PADDLE_MKLDNN_CACHE_CAPACITY=20
 
 COPY ocr_api.py .
+COPY generate_optimized_config.py .
 COPY docker-entrypoint.sh /app/
 RUN chmod +x /app/docker-entrypoint.sh
 

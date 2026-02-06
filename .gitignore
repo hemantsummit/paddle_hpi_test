@@ -1,11 +1,24 @@
+# Config directory (generated files)
+config/
+
+# Python cache
 __pycache__/
-*.py[cod]
-*.egg-info/
-.eggs/
-dist/
-build/
-.env
-.venv/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
 venv/
-*.log
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
 .DS_Store
+Thumbs.db

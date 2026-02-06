@@ -4,11 +4,29 @@ set -e
 
 PADDLEX_PORT=8080
 
+# Performance tuning: read from environment variables with defaults
+CPU_THREADS=${PADDLE_CPU_THREADS:-10}
+MKLDNN_ENABLED=${FLAGS_use_mkldnn:-1}
+MKLDNN_CACHE=${PADDLE_MKLDNN_CACHE_CAPACITY:-20}
+
+echo "=== Performance Configuration ==="
+echo "CPU Threads: $CPU_THREADS"
+echo "MKLDNN Enabled: $MKLDNN_ENABLED"
+echo "MKLDNN Cache Capacity: $MKLDNN_CACHE"
+echo "================================"
+
+# Export for Python processes
+export PADDLE_CPU_THREADS=$CPU_THREADS
+export FLAGS_use_mkldnn=$MKLDNN_ENABLED
+export PADDLE_MKLDNN_CACHE_CAPACITY=$MKLDNN_CACHE
+
 # Use custom config if present, else default OCR pipeline
 if [ -f /app/ocr_config.yaml ]; then
   PIPELINE_ARG="/app/ocr_config.yaml"
+  echo "Using custom config: /app/ocr_config.yaml"
 else
   PIPELINE_ARG="OCR"
+  echo "Using default OCR pipeline"
 fi
 
 # Use HPI only when ultra-infer-python is installed (native Linux x86_64)

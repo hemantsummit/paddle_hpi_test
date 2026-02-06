@@ -4,6 +4,38 @@ Your API format (form-data, URL) → ocr_api proxy → PaddleX serving → OCR r
 
 ## Docker
 
+### Quick Start (Optimized Config)
+
+**Step 1: Build image and generate optimized config**
+```bash
+./build-optimized.sh
+```
+
+**Step 2: Run the container**
+```bash
+./run-optimized.sh
+```
+
+Or customize performance settings:
+```bash
+# Build with custom settings
+PADDLE_CPU_THREADS=8 \
+PADDLE_MKLDNN_CACHE_CAPACITY=30 \
+FLAGS_use_mkldnn=1 \
+./build-optimized.sh
+
+# Run with same settings
+PADDLE_CPU_THREADS=8 \
+PADDLE_MKLDNN_CACHE_CAPACITY=30 \
+FLAGS_use_mkldnn=1 \
+./run-optimized.sh
+```
+
+**All-in-one script** (build + run):
+```bash
+./build-and-run-optimized.sh
+```
+
 ### Optimal performance (native Linux x86_64)
 
 HPI (OpenVINO/ONNX) installs only on native Linux x86_64. For the high-performance backend:
@@ -71,3 +103,36 @@ Response:
 | Apple Silicon / emulated | ✗ | Paddle Inference |
 
 On Apple Silicon, `ultra-infer-python` has no arm64 wheel. Use `build-linux.sh` on a Linux x86_64 VM or GitHub Actions for optimal performance.
+
+## Performance Tuning
+
+See [PERFORMANCE_TUNING.md](PERFORMANCE_TUNING.md) for detailed optimization options.
+
+### Quick Performance Boost
+
+Set environment variables when running the container:
+
+```bash
+# Optimized for 8-core CPU
+docker run -p 8000:8000 \
+  -e PADDLE_CPU_THREADS=8 \
+  -e FLAGS_use_mkldnn=1 \
+  -e PADDLE_MKLDNN_CACHE_CAPACITY=30 \
+  paddleocr-api:latest
+```
+
+### Key Configuration Options
+
+- **PADDLE_CPU_THREADS**: Number of CPU threads (default: 10, recommend: number of cores)
+- **FLAGS_use_mkldnn**: Enable MKLDNN acceleration (default: 1, Intel CPUs benefit most)
+- **PADDLE_MKLDNN_CACHE_CAPACITY**: MKLDNN cache size (default: 20, increase for batch processing)
+
+### Test Performance
+
+```bash
+# Test inference time
+./performance-test.sh
+
+# Or manually
+time curl -X POST http://localhost:8000/ocr -F "image=@test_image.png"
+```
