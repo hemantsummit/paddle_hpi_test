@@ -35,15 +35,26 @@ else
 fi
 
 # Use HPI only when ultra-infer-python is installed (native Linux x86_64)
+HPI_CONFIG_ARG=""
 if pip show ultra-infer-python >/dev/null 2>&1; then
   echo "Using HPI (high-performance backend)"
   HPIP_FLAG="--use_hpip"
+  
+  # Create HPI config file with performance settings
+  echo "Creating HPI config..."
+  python create_hpi_config.py /app/hpi_config.json || echo "Warning: Could not create HPI config"
+  
+  # Use HPI config if it was created
+  if [ -f /app/hpi_config.json ]; then
+    HPI_CONFIG_ARG="--hpi_config /app/hpi_config.json"
+    echo "Using HPI config: /app/hpi_config.json"
+  fi
 else
   echo "Using Paddle Inference backend (HPI not available)"
   HPIP_FLAG=""
 fi
 
-paddlex --serve --pipeline "$PIPELINE_ARG" --device cpu $HPIP_FLAG --port "$PADDLEX_PORT" --host 0.0.0.0 &
+paddlex --serve --pipeline "$PIPELINE_ARG" --device cpu $HPIP_FLAG $HPI_CONFIG_ARG --port "$PADDLEX_PORT" --host 0.0.0.0 &
 PADDLEX_PID=$!
 
 echo "Waiting for PaddleX serving on port $PADDLEX_PORT..."

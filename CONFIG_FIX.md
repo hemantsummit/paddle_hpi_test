@@ -89,9 +89,24 @@ Verify if PaddleX serving supports these settings via:
 3. Check if PaddleX has command-line options for these settings
 4. Consider if these settings are actually used by PaddleX (they might be ignored)
 
+## Solution: Use --hpi_config Option
+
+Based on [PaddleX serving documentation](https://paddlepaddle.github.io/PaddleX/3.3/en/pipeline_deploy/serving.html), when using `--use_hpip` (high-performance inference plugin), we should use the `--hpi_config` option to pass performance settings.
+
+**New approach:**
+1. Create `hpi_config.json` with `cpu_threads` and `mkldnn_cache_capacity`
+2. Pass it via `--hpi_config /app/hpi_config.json` when starting PaddleX serving
+3. This ensures HPI plugin reads the performance settings correctly
+
+**Implementation:**
+- Added `create_hpi_config.py` to generate HPI config JSON from environment variables
+- Updated `docker-entrypoint.sh` to create and use HPI config when `--use_hpip` is enabled
+- The HPI config is created at runtime with current environment variable values
+
 ## Note
 
-The config file is being updated correctly, but PaddleX might not be reading these specific settings. The performance might still be optimized via:
+The YAML config file is still being updated for compatibility, but the primary method for performance tuning when using HPI is via `--hpi_config`. The performance might also be optimized via:
 - MKLDNN being enabled (which is working)
+- HPI config settings (cpu_threads, mkldnn_cache_capacity)
 - Other YAML settings that PaddleX does read
 - Model selection (server vs mobile models)
