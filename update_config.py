@@ -25,46 +25,58 @@ def update_config(config_path="/app/ocr_config.yaml"):
         
         updated = False
         
-        # Update Global section if it exists
-        if 'Global' in config:
-            if 'cpu_threads' in config['Global']:
-                if config['Global']['cpu_threads'] != cpu_threads:
-                    config['Global']['cpu_threads'] = cpu_threads
-                    updated = True
-            else:
-                config['Global']['cpu_threads'] = cpu_threads
+        def update_section(section):
+            """Update a config section with performance settings."""
+            nonlocal updated
+            if not isinstance(section, dict):
+                return
+            
+            # Update cpu_threads
+            if section.get('cpu_threads') != cpu_threads:
+                section['cpu_threads'] = cpu_threads
                 updated = True
             
-            if 'enable_mkldnn' in config['Global']:
-                if config['Global']['enable_mkldnn'] != enable_mkldnn:
-                    config['Global']['enable_mkldnn'] = enable_mkldnn
-                    updated = True
-            else:
-                config['Global']['enable_mkldnn'] = enable_mkldnn
+            # Update enable_mkldnn
+            if section.get('enable_mkldnn') != enable_mkldnn:
+                section['enable_mkldnn'] = enable_mkldnn
                 updated = True
             
-            if 'mkldnn_cache_capacity' in config['Global']:
-                if config['Global']['mkldnn_cache_capacity'] != mkldnn_cache:
-                    config['Global']['mkldnn_cache_capacity'] = mkldnn_cache
-                    updated = True
-            else:
-                config['Global']['mkldnn_cache_capacity'] = mkldnn_cache
+            # Update mkldnn_cache_capacity
+            if section.get('mkldnn_cache_capacity') != mkldnn_cache:
+                section['mkldnn_cache_capacity'] = mkldnn_cache
                 updated = True
         
-        # Also check for Det and Rec sections (PaddleOCR structure)
+        # Update Global section if it exists (old PaddleOCR structure)
+        if 'Global' in config:
+            update_section(config['Global'])
+        
+        # Update Det, Rec, Cls sections (old PaddleOCR structure)
         for section_name in ['Det', 'Rec', 'Cls']:
             if section_name in config:
-                section = config[section_name]
-                if isinstance(section, dict):
-                    if 'cpu_threads' not in section or section['cpu_threads'] != cpu_threads:
-                        section['cpu_threads'] = cpu_threads
-                        updated = True
-                    if 'enable_mkldnn' not in section or section['enable_mkldnn'] != enable_mkldnn:
-                        section['enable_mkldnn'] = enable_mkldnn
-                        updated = True
-                    if 'mkldnn_cache_capacity' not in section or section['mkldnn_cache_capacity'] != mkldnn_cache:
-                        section['mkldnn_cache_capacity'] = mkldnn_cache
-                        updated = True
+                update_section(config[section_name])
+        
+        # Update SubModules structure (PaddleX pipeline structure)
+        if 'SubModules' in config:
+            for module_name, module_config in config['SubModules'].items():
+                if isinstance(module_config, dict):
+                    # Update the module config directly
+                    update_section(module_config)
+                    
+                    # Also check for 'inference_config' or 'predictor_config' nested sections
+                    for nested_key in ['inference_config', 'predictor_config', 'config']:
+                        if nested_key in module_config and isinstance(module_config[nested_key], dict):
+                            update_section(module_config[nested_key])
+        
+        # Update SubPipelines structure (if it contains configs)
+        if 'SubPipelines' in config:
+            for pipeline_name, pipeline_config in config['SubPipelines'].items():
+                if isinstance(pipeline_config, dict):
+                    # Recursively update any config sections
+                    update_section(pipeline_config)
+                    if 'SubModules' in pipeline_config:
+                        for module_name, module_config in pipeline_config['SubModules'].items():
+                            if isinstance(module_config, dict):
+                                update_section(module_config)
         
         # Write back if updated
         if updated:

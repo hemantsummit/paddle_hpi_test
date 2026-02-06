@@ -21,29 +21,33 @@ def verify_config(config_path="/app/ocr_config.yaml"):
         print(f"\n=== Config File: {config_path} ===")
         print(f"Config structure: {list(config.keys())}")
         
-        # Check Global section
+        def print_section(name, section):
+            """Print performance settings from a section."""
+            if isinstance(section, dict):
+                print(f"\n{name}:")
+                print(f"  cpu_threads: {section.get('cpu_threads', 'NOT SET')}")
+                print(f"  enable_mkldnn: {section.get('enable_mkldnn', 'NOT SET')}")
+                print(f"  mkldnn_cache_capacity: {section.get('mkldnn_cache_capacity', 'NOT SET')}")
+        
+        # Check Global section (old structure)
         if 'Global' in config:
-            print("\nGlobal section:")
-            global_section = config['Global']
-            print(f"  cpu_threads: {global_section.get('cpu_threads', 'NOT SET')}")
-            print(f"  enable_mkldnn: {global_section.get('enable_mkldnn', 'NOT SET')}")
-            print(f"  mkldnn_cache_capacity: {global_section.get('mkldnn_cache_capacity', 'NOT SET')}")
+            print_section("Global section", config['Global'])
         
-        # Check Det section
-        if 'Det' in config:
-            print("\nDet section:")
-            det_section = config['Det'] if isinstance(config['Det'], dict) else {}
-            print(f"  cpu_threads: {det_section.get('cpu_threads', 'NOT SET')}")
-            print(f"  enable_mkldnn: {det_section.get('enable_mkldnn', 'NOT SET')}")
-            print(f"  mkldnn_cache_capacity: {det_section.get('mkldnn_cache_capacity', 'NOT SET')}")
+        # Check Det, Rec, Cls sections (old structure)
+        for section_name in ['Det', 'Rec', 'Cls']:
+            if section_name in config:
+                print_section(f"{section_name} section", config[section_name] if isinstance(config[section_name], dict) else {})
         
-        # Check Rec section
-        if 'Rec' in config:
-            print("\nRec section:")
-            rec_section = config['Rec'] if isinstance(config['Rec'], dict) else {}
-            print(f"  cpu_threads: {rec_section.get('cpu_threads', 'NOT SET')}")
-            print(f"  enable_mkldnn: {rec_section.get('enable_mkldnn', 'NOT SET')}")
-            print(f"  mkldnn_cache_capacity: {rec_section.get('mkldnn_cache_capacity', 'NOT SET')}")
+        # Check SubModules structure (PaddleX pipeline structure)
+        if 'SubModules' in config:
+            print("\nSubModules:")
+            for module_name, module_config in config['SubModules'].items():
+                if isinstance(module_config, dict):
+                    print_section(f"  {module_name}", module_config)
+                    # Check nested configs
+                    for nested_key in ['inference_config', 'predictor_config', 'config']:
+                        if nested_key in module_config:
+                            print_section(f"    {module_name}.{nested_key}", module_config[nested_key] if isinstance(module_config[nested_key], dict) else {})
         
         print("\n=== Environment Variables ===")
         print(f"PADDLE_CPU_THREADS: {os.environ.get('PADDLE_CPU_THREADS', 'NOT SET')}")

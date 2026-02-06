@@ -48,16 +48,50 @@ You should see:
 - The verified config values matching your environment variables
 - PaddleX using the correct values (check the "Paddle predictor option" lines)
 
-## If Still Not Working
+## Current Issue
 
-If PaddleX still uses defaults, it might be that:
-1. PaddleX doesn't read these settings from YAML (may need PaddlePaddle Config API)
-2. The YAML structure is different than expected
-3. Settings need to be set via different environment variables
+**Problem**: PaddleX is still using `cpu_threads: 10` and `mkldnn_cache_capacity: 10` even though:
+- Environment variables are set correctly (4 and 30)
+- Config file is being updated
+- Config verification shows correct values
 
-In that case, check the actual YAML structure:
-```bash
-docker exec paddleocr-api cat /app/ocr_config.yaml
-```
+**Root Cause**: PaddleX serving creates PaddlePaddle Config objects internally and doesn't read `cpu_threads` and `mkldnn_cache_capacity` from the YAML config file. These are PaddlePaddle inference engine settings that need to be set via the Config API, not the YAML.
 
-And verify what PaddleX is actually reading by checking the full logs.
+**Evidence**: The log shows "The Paddle Inference backend is selected with the default configuration" - this means PaddleX is using its own defaults, not reading from YAML.
+
+## Potential Solutions
+
+### Option 1: Modify PaddleX Source (Not Recommended)
+Modify PaddleX's internal code to read these settings from the config or environment.
+
+### Option 2: Use PaddlePaddle Config API (Needs Investigation)
+Set these via PaddlePaddle's Config API before PaddleX creates its Config objects. This would require:
+- Intercepting PaddleX's Config creation
+- Setting cpu_threads and mkldnn_cache_capacity via Config.set_cpu_math_library_num_threads() or similar
+- This is complex and may not be possible without modifying PaddleX
+
+### Option 3: Accept Limitations (Current State)
+The YAML config might not support these low-level PaddlePaddle inference settings. The settings might need to be:
+- Set at PaddlePaddle build time
+- Configured via PaddlePaddle's C++ API (not accessible from Python)
+- Or these settings might not be configurable via PaddleX serving
+
+### Option 4: Check PaddleX Documentation
+Verify if PaddleX serving supports these settings via:
+- Command-line arguments
+- Different YAML structure
+- PaddleX-specific environment variables
+
+## Next Steps
+
+1. Check PaddleX serving documentation for performance tuning options
+2. Inspect the actual YAML structure: `docker exec paddleocr-api cat /app/ocr_config.yaml`
+3. Check if PaddleX has command-line options for these settings
+4. Consider if these settings are actually used by PaddleX (they might be ignored)
+
+## Note
+
+The config file is being updated correctly, but PaddleX might not be reading these specific settings. The performance might still be optimized via:
+- MKLDNN being enabled (which is working)
+- Other YAML settings that PaddleX does read
+- Model selection (server vs mobile models)
