@@ -24,22 +24,20 @@ def main():
             hpi_config_index = i
             break
     
-    # If HPI config file is specified, read it and replace with Python dict string
-    # PaddleX uses ast.literal_eval which expects Python literals, not JSON
+    # If HPI config file is specified, read it and replace with JSON string
     if hpi_config_file and os.path.exists(hpi_config_file):
         try:
             with open(hpi_config_file, 'r') as f:
                 hpi_config_dict = json.load(f)
             
-            # Convert dict to Python literal string format (ast.literal_eval compatible)
-            # repr() gives us Python dict format: {'key': True} instead of {"key": true}
-            hpi_config_python = repr(hpi_config_dict)
+            # Convert to JSON string (single line, no spaces for shell safety)
+            hpi_config_json = json.dumps(hpi_config_dict, separators=(',', ':'))
             
-            # Replace file path with Python dict string in args
-            args[hpi_config_index + 1] = hpi_config_python
+            # Replace file path with JSON string in args
+            args[hpi_config_index + 1] = hpi_config_json
             
             print(f"Loaded HPI config from {hpi_config_file}")
-            print(f"HPI config (Python format): {hpi_config_python}")
+            print(f"HPI config: {hpi_config_json}")
         except Exception as e:
             print(f"Warning: Could not load HPI config from {hpi_config_file}: {e}", file=sys.stderr)
             # Remove --hpi_config and its value if we can't load it

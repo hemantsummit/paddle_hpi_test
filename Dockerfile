@@ -54,8 +54,6 @@ COPY ocr_api.py .
 COPY generate_optimized_config.py .
 COPY update_config.py .
 COPY verify_config.py .
-COPY create_hpi_config.py .
-COPY paddlex_serve_wrapper.py .
 COPY docker-entrypoint.sh /app/
 RUN chmod +x /app/docker-entrypoint.sh
 

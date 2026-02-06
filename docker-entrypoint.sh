@@ -4,15 +4,31 @@ set -e
 
 PADDLEX_PORT=8080
 
-# Performance tuning: read from environment variables with defaults
-CPU_THREADS=${PADDLE_CPU_THREADS:-10}
+# Performance tuning: auto-detect optimal values if not set
+# Detect CPU cores (use nproc if available, else fallback to Python)
+if command -v nproc >/dev/null 2>&1; then
+  DETECTED_CORES=$(nproc)
+else
+  DETECTED_CORES=$(python -c "import os; print(os.cpu_count() or 8)")
+fi
+
+# Use environment variable if set, otherwise auto-detect optimal value
+# Optimal: match CPU cores (or cores - 1 to leave headroom for system)
+CPU_THREADS=${PADDLE_CPU_THREADS:-$DETECTED_CORES}
 MKLDNN_ENABLED=${FLAGS_use_mkldnn:-1}
-MKLDNN_CACHE=${PADDLE_MKLDNN_CACHE_CAPACITY:-20}
+# Optimal mkldnn_cache: 20-50, scale with CPU threads (higher for more threads)
+# Formula: max(20, min(50, CPU_THREADS * 3))
+if [ -z "$PADDLE_MKLDNN_CACHE_CAPACITY" ]; then
+  MKLDNN_CACHE=$(python -c "threads = $CPU_THREADS; print(max(20, min(50, threads * 3)))")
+else
+  MKLDNN_CACHE=$PADDLE_MKLDNN_CACHE_CAPACITY
+fi
 
 echo "=== Performance Configuration ==="
-echo "CPU Threads: $CPU_THREADS"
+echo "Detected CPU cores: $DETECTED_CORES"
+echo "CPU Threads: $CPU_THREADS (auto-detected: $DETECTED_CORES)"
 echo "MKLDNN Enabled: $MKLDNN_ENABLED"
-echo "MKLDNN Cache Capacity: $MKLDNN_CACHE"
+echo "MKLDNN Cache Capacity: $MKLDNN_CACHE (auto-optimized)"
 echo "================================"
 
 # Export for Python processes
@@ -34,30 +50,22 @@ else
   echo "Using default OCR pipeline"
 fi
 
+# Create PaddlePaddle option string for performance tuning
+# Format: --pp_option "{'cpu_threads': N, 'mkldnn_cache_capacity': M}"
+# Use Python to ensure proper formatting (Python dict string, not JSON)
+PP_OPTION_STR=$(python -c "
+import os
+cpu_threads = int(os.environ.get('PADDLE_CPU_THREADS', '10'))
+mkldnn_cache = int(os.environ.get('PADDLE_MKLDNN_CACHE_CAPACITY', '20'))
+print(f\"{{'cpu_threads': {cpu_threads}, 'mkldnn_cache_capacity': {mkldnn_cache}}}\")
+")
+
+echo "PaddlePaddle options: $PP_OPTION_STR"
+
 # Use HPI only when ultra-infer-python is installed (native Linux x86_64)
-HPI_CONFIG_ARG=""
 if pip show ultra-infer-python >/dev/null 2>&1; then
   echo "Using HPI (high-performance backend)"
   HPIP_FLAG="--use_hpip"
-  
-  # Create HPI config file with performance settings
-  echo "Creating HPI config..."
-  python create_hpi_config.py /app/hpi_config.json || echo "Warning: Could not create HPI config"
-  
-  # Use HPI config if it was created
-  # Note: --hpi_config might expect JSON string or file path - try file path first
-  # If that fails, we'll need to pass JSON content directly
-  if [ -f /app/hpi_config.json ]; then
-    echo "Using HPI config: /app/hpi_config.json"
-    echo "HPI config contents:"
-    cat /app/hpi_config.json
-    echo ""
-    # Try passing as file path first (some versions might accept this)
-    # If this causes errors, we'll need to read and pass JSON content
-    HPI_CONFIG_ARG="--hpi_config /app/hpi_config.json"
-  else
-    echo "Warning: HPI config file not found after creation"
-  fi
 else
   echo "Using Paddle Inference backend (HPI not available)"
   HPIP_FLAG=""
@@ -65,15 +73,11 @@ fi
 
 # Debug: Show the exact command being executed
 echo "Executing PaddleX command:"
-if [ -n "$HPI_CONFIG_ARG" ]; then
-  echo "  Using Python wrapper to handle HPI config format"
-  echo "  paddlex --serve --pipeline $PIPELINE_ARG --device cpu $HPIP_FLAG $HPI_CONFIG_ARG --port $PADDLEX_PORT --host 0.0.0.0"
-  # Use Python wrapper to properly format HPI config (PaddleX expects JSON string, not file path)
-  python paddlex_serve_wrapper.py --serve --pipeline "$PIPELINE_ARG" --device cpu $HPIP_FLAG $HPI_CONFIG_ARG --port "$PADDLEX_PORT" --host 0.0.0.0 &
-else
-  echo "  paddlex --serve --pipeline $PIPELINE_ARG --device cpu $HPIP_FLAG --port $PADDLEX_PORT --host 0.0.0.0"
-  paddlex --serve --pipeline "$PIPELINE_ARG" --device cpu $HPIP_FLAG --port "$PADDLEX_PORT" --host 0.0.0.0 &
-fi
+echo "  paddlex --serve --pipeline $PIPELINE_ARG --device cpu $HPIP_FLAG --pp_option \"$PP_OPTION_STR\" --port $PADDLEX_PORT --host 0.0.0.0"
+echo ""
+
+# Pass --pp_option and its value as separate arguments (properly quoted)
+paddlex --serve --pipeline "$PIPELINE_ARG" --device cpu $HPIP_FLAG --pp_option "$PP_OPTION_STR" --port "$PADDLEX_PORT" --host 0.0.0.0 &
 PADDLEX_PID=$!
 
 echo "Waiting for PaddleX serving on port $PADDLEX_PORT..."
