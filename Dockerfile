@@ -21,8 +21,21 @@ RUN paddleocr install_hpi_deps cpu || true
 # PaddleX serving plugin
 RUN paddlex --install serving
 
+# Performance tuning: support build-time overrides via --build-arg
+# These can be overridden at build time: docker build --build-arg PADDLE_CPU_THREADS=8 ...
+ARG PADDLE_CPU_THREADS=10
+ARG FLAGS_use_mkldnn=1
+ARG PADDLE_MKLDNN_CACHE_CAPACITY=20
+
+# Set as ENV so they're available to the RUN command below and at runtime
+# Note: FLAGS_use_mkldnn=0 was set to avoid Paddle 3.3+ bug, but PaddleX may override
+# Enable MKLDNN for better performance on Intel CPUs (test if stable)
+ENV FLAGS_use_mkldnn=${FLAGS_use_mkldnn}
+ENV PADDLE_CPU_THREADS=${PADDLE_CPU_THREADS}
+ENV PADDLE_MKLDNN_CACHE_CAPACITY=${PADDLE_MKLDNN_CACHE_CAPACITY}
+
 # OCR config: disable doc orientation/unwarping/textline_ori (keep server models)
-# Performance tuning: can be overridden via environment variables
+# Performance tuning: reads from ENV variables set above (can be overridden at build/runtime)
 RUN python -c "\
 from paddleocr import PaddleOCR; \
 import os; \
@@ -36,13 +49,6 @@ p = PaddleOCR( \
     enable_mkldnn=enable_mkldnn, \
 ); \
 p.export_paddlex_config_to_yaml('/app/ocr_config.yaml')"
-
-# Performance tuning defaults (can be overridden at runtime)
-# Note: FLAGS_use_mkldnn=0 was set to avoid Paddle 3.3+ bug, but PaddleX may override
-# Enable MKLDNN for better performance on Intel CPUs (test if stable)
-ENV FLAGS_use_mkldnn=1
-ENV PADDLE_CPU_THREADS=10
-ENV PADDLE_MKLDNN_CACHE_CAPACITY=20
 
 COPY ocr_api.py .
 COPY generate_optimized_config.py .
