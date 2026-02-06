@@ -59,6 +59,11 @@ else
   HPIP_FLAG=""
 fi
 
+# Debug: Show the exact command being executed
+echo "Executing PaddleX command:"
+echo "  paddlex --serve --pipeline $PIPELINE_ARG --device cpu $HPIP_FLAG $HPI_CONFIG_ARG --port $PADDLEX_PORT --host 0.0.0.0"
+echo ""
+
 paddlex --serve --pipeline "$PIPELINE_ARG" --device cpu $HPIP_FLAG $HPI_CONFIG_ARG --port "$PADDLEX_PORT" --host 0.0.0.0 &
 PADDLEX_PID=$!
 

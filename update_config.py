@@ -56,14 +56,23 @@ def update_config(config_path="/app/ocr_config.yaml"):
                 update_section(config[section_name])
         
         # Update SubModules structure (PaddleX pipeline structure)
+        # These settings should be in inference_config sections for each module
         if 'SubModules' in config:
             for module_name, module_config in config['SubModules'].items():
                 if isinstance(module_config, dict):
-                    # Update the module config directly
+                    # Ensure inference_config exists and update it
+                    if 'inference_config' not in module_config:
+                        module_config['inference_config'] = {}
+                        updated = True
+                    
+                    if isinstance(module_config['inference_config'], dict):
+                        update_section(module_config['inference_config'])
+                    
+                    # Also update the module config directly (for backward compatibility)
                     update_section(module_config)
                     
-                    # Also check for 'inference_config' or 'predictor_config' nested sections
-                    for nested_key in ['inference_config', 'predictor_config', 'config']:
+                    # Check other nested config sections
+                    for nested_key in ['predictor_config', 'config']:
                         if nested_key in module_config and isinstance(module_config[nested_key], dict):
                             update_section(module_config[nested_key])
         
