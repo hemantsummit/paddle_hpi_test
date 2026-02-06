@@ -45,12 +45,16 @@ if pip show ultra-infer-python >/dev/null 2>&1; then
   python create_hpi_config.py /app/hpi_config.json || echo "Warning: Could not create HPI config"
   
   # Use HPI config if it was created
+  # Note: --hpi_config might expect JSON string or file path - try file path first
+  # If that fails, we'll need to pass JSON content directly
   if [ -f /app/hpi_config.json ]; then
-    HPI_CONFIG_ARG="--hpi_config /app/hpi_config.json"
     echo "Using HPI config: /app/hpi_config.json"
     echo "HPI config contents:"
     cat /app/hpi_config.json
     echo ""
+    # Try passing as file path first (some versions might accept this)
+    # If this causes errors, we'll need to read and pass JSON content
+    HPI_CONFIG_ARG="--hpi_config /app/hpi_config.json"
   else
     echo "Warning: HPI config file not found after creation"
   fi
@@ -61,10 +65,15 @@ fi
 
 # Debug: Show the exact command being executed
 echo "Executing PaddleX command:"
-echo "  paddlex --serve --pipeline $PIPELINE_ARG --device cpu $HPIP_FLAG $HPI_CONFIG_ARG --port $PADDLEX_PORT --host 0.0.0.0"
-echo ""
-
-paddlex --serve --pipeline "$PIPELINE_ARG" --device cpu $HPIP_FLAG $HPI_CONFIG_ARG --port "$PADDLEX_PORT" --host 0.0.0.0 &
+if [ -n "$HPI_CONFIG_ARG" ]; then
+  echo "  Using Python wrapper to handle HPI config format"
+  echo "  paddlex --serve --pipeline $PIPELINE_ARG --device cpu $HPIP_FLAG $HPI_CONFIG_ARG --port $PADDLEX_PORT --host 0.0.0.0"
+  # Use Python wrapper to properly format HPI config (PaddleX expects JSON string, not file path)
+  python paddlex_serve_wrapper.py --serve --pipeline "$PIPELINE_ARG" --device cpu $HPIP_FLAG $HPI_CONFIG_ARG --port "$PADDLEX_PORT" --host 0.0.0.0 &
+else
+  echo "  paddlex --serve --pipeline $PIPELINE_ARG --device cpu $HPIP_FLAG --port $PADDLEX_PORT --host 0.0.0.0"
+  paddlex --serve --pipeline "$PIPELINE_ARG" --device cpu $HPIP_FLAG --port "$PADDLEX_PORT" --host 0.0.0.0 &
+fi
 PADDLEX_PID=$!
 
 echo "Waiting for PaddleX serving on port $PADDLEX_PORT..."
