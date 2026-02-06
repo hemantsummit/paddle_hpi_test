@@ -48,6 +48,11 @@ if pip show ultra-infer-python >/dev/null 2>&1; then
   if [ -f /app/hpi_config.json ]; then
     HPI_CONFIG_ARG="--hpi_config /app/hpi_config.json"
     echo "Using HPI config: /app/hpi_config.json"
+    echo "HPI config contents:"
+    cat /app/hpi_config.json
+    echo ""
+  else
+    echo "Warning: HPI config file not found after creation"
   fi
 else
   echo "Using Paddle Inference backend (HPI not available)"
