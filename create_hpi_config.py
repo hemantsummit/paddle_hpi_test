@@ -15,16 +15,15 @@ def create_hpi_config(output_path="/app/hpi_config.json"):
     
     cpu_threads = int(os.environ.get("PADDLE_CPU_THREADS", "10"))
     mkldnn_cache = int(os.environ.get("PADDLE_MKLDNN_CACHE_CAPACITY", "20"))
-    enable_mkldnn = os.environ.get("FLAGS_use_mkldnn", "1") == "1"
     
-    # HPI config structure per PaddleX High-Performance Inference docs:
-    # backend_config overrides defaults; for "paddle" backend, use PaddlePredictorOption attributes
+    # HPI config: backend_config maps to PaddlePredictorOption. Only these are supported:
+    # cpu_threads, mkldnn_cache_capacity, run_mode, device_type, etc.
+    # enable_mkldnn is NOT supported - use FLAGS_use_mkldnn env var instead.
     hpi_config = {
         "backend": "paddle",
         "backend_config": {
             "cpu_threads": cpu_threads,
             "mkldnn_cache_capacity": mkldnn_cache,
-            "enable_mkldnn": enable_mkldnn,
         },
     }
     
@@ -37,7 +36,6 @@ def create_hpi_config(output_path="/app/hpi_config.json"):
         print(f"✓ Created HPI config: {output_path}")
         print(f"  cpu_threads: {cpu_threads}")
         print(f"  mkldnn_cache_capacity: {mkldnn_cache}")
-        print(f"  enable_mkldnn: {enable_mkldnn}")
         return True
     except Exception as e:
         print(f"Error creating HPI config: {e}", file=sys.stderr)
