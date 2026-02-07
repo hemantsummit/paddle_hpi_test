@@ -29,12 +29,16 @@ RUN python3 -m pip install --no-cache-dir \
 # HPI GPU + Paddle2ONNX installed at runtime (build has no GPU / libcuda.so.1)
 # See docker-entrypoint-gpu.sh
 
-# ocr_api proxy deps
+# ocr_api proxy deps + config scripts (PyYAML for update_config, verify_config)
 RUN python3 -m pip install --no-cache-dir \
     fastapi>=0.100.0 uvicorn[standard]>=0.22.0 \
-    python-multipart>=0.0.6 httpx>=0.24.0
+    python-multipart>=0.0.6 httpx>=0.24.0 \
+    pyyaml>=5.0
 
 COPY ocr_api.py .
+COPY generate_optimized_config.py .
+COPY update_config.py .
+COPY verify_config.py .
 COPY docker-entrypoint-gpu.sh /app/
 RUN chmod +x /app/docker-entrypoint-gpu.sh
 

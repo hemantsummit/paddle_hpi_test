@@ -48,6 +48,33 @@ docker run -p 8000:8000 paddleocr-api:latest
 
 Or use GitHub Actions: `.github/workflows/build.yml` builds on `ubuntu-latest` (native amd64).
 
+### GPU (NVIDIA)
+
+Config is generated at **runtime** (not build). Requires `nvidia-container-toolkit` and `docker run --gpus all`.
+
+```bash
+# Build
+./build-gpu.sh
+
+# Run (config generated at startup; pass env vars for tuning)
+./run-gpu.sh
+```
+
+Custom config or tuning via env vars:
+
+```bash
+# With custom config (optional: mount ./config/ocr_config.yaml)
+PADDLE_CPU_THREADS=8 \
+PADDLE_DET_LIMIT_SIDE_LEN=960 \
+PADDLE_PRECISION=fp16 \
+./run-gpu.sh
+
+# Or mount your own config
+mkdir -p config
+# create config/ocr_config.yaml, then:
+./run-gpu.sh
+```
+
 ### Any platform (fallback)
 
 ```bash

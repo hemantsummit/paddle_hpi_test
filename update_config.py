@@ -16,6 +16,7 @@ def update_config(config_path="/app/ocr_config.yaml"):
     enable_mkldnn = os.environ.get("FLAGS_use_mkldnn", "1") == "1"
     det_limit_side_len = int(os.environ.get("PADDLE_DET_LIMIT_SIDE_LEN", "960"))
     precision = os.environ.get("PADDLE_PRECISION", "fp16")
+    use_gpu = os.environ.get("PADDLE_USE_GPU", "0") == "1"
     if precision not in ("fp32", "fp16", "int8"):
         precision = "fp16"
     
@@ -55,6 +56,15 @@ def update_config(config_path="/app/ocr_config.yaml"):
                 section['precision'] = precision
                 updated = True
         
+        def update_use_gpu(section):
+            """Update use_gpu for GPU configs."""
+            nonlocal updated
+            if not isinstance(section, dict):
+                return
+            if section.get('use_gpu') != use_gpu:
+                section['use_gpu'] = use_gpu
+                updated = True
+        
         def update_det_section(section):
             """Update detection-specific settings."""
             nonlocal updated
@@ -69,6 +79,7 @@ def update_config(config_path="/app/ocr_config.yaml"):
         
         # Update Global section if it exists (old PaddleOCR structure)
         if 'Global' in config:
+            update_use_gpu(config['Global'])
             update_section(config['Global'])
         
         # Update Det, Rec, Cls sections (old PaddleOCR structure)
@@ -118,10 +129,10 @@ def update_config(config_path="/app/ocr_config.yaml"):
         if updated:
             with open(config_path, 'w') as f:
                 yaml.dump(config, f, default_flow_style=False, sort_keys=False)
-            print(f"✓ Updated config: cpu_threads={cpu_threads}, mkldnn_cache={mkldnn_cache}, det_limit_side_len={det_limit_side_len}, precision={precision}")
+            print(f"✓ Updated config: use_gpu={use_gpu}, cpu_threads={cpu_threads}, mkldnn_cache={mkldnn_cache}, det_limit_side_len={det_limit_side_len}, precision={precision}")
             return True
         else:
-            print(f"✓ Config already has correct values: cpu_threads={cpu_threads}, mkldnn_cache={mkldnn_cache}, det_limit_side_len={det_limit_side_len}, precision={precision}")
+            print(f"✓ Config already has correct values: use_gpu={use_gpu}, cpu_threads={cpu_threads}, mkldnn_cache={mkldnn_cache}, det_limit_side_len={det_limit_side_len}, precision={precision}")
             return True
             
     except Exception as e:

@@ -18,6 +18,7 @@ def generate_config(
     enable_mkldnn: bool = None,
     det_limit_side_len: int = None,
     precision: str = None,
+    use_gpu: bool = False,
     output_path: str = "/app/ocr_config.yaml",
 ):
     """Generate optimized OCR config YAML."""
@@ -30,8 +31,10 @@ def generate_config(
     precision = precision or os.environ.get("PADDLE_PRECISION", "fp16")
     if precision not in ("fp32", "fp16", "int8"):
         precision = "fp16"
+    use_gpu = use_gpu or os.environ.get("PADDLE_USE_GPU", "0") == "1"
     
     print(f"Generating OCR config:")
+    print(f"  Use GPU: {use_gpu}")
     print(f"  CPU Threads: {cpu_threads}")
     print(f"  MKLDNN Enabled: {enable_mkldnn}")
     print(f"  MKLDNN Cache Capacity: {mkldnn_cache}")
@@ -45,6 +48,7 @@ def generate_config(
         use_doc_orientation_classify=True,
         use_doc_unwarping=False,
         use_textline_orientation=False,
+        use_gpu=use_gpu,
         cpu_threads=cpu_threads,
         enable_mkldnn=enable_mkldnn,
         text_det_limit_side_len=det_limit_side_len,
@@ -67,6 +71,9 @@ def generate_config(
         
         # Update Global section
         if 'Global' in config:
+            if config['Global'].get('use_gpu') != use_gpu:
+                config['Global']['use_gpu'] = use_gpu
+                updated = True
             if config['Global'].get('cpu_threads') != cpu_threads:
                 config['Global']['cpu_threads'] = cpu_threads
                 updated = True
@@ -144,6 +151,7 @@ if __name__ == "__main__":
     parser.add_argument("--precision", choices=["fp32", "fp16", "int8"], help="Inference precision (default: fp16)")
     parser.add_argument("--enable-mkldnn", action="store_true", help="Enable MKLDNN (default: True)")
     parser.add_argument("--disable-mkldnn", action="store_true", help="Disable MKLDNN")
+    parser.add_argument("--use-gpu", action="store_true", help="Generate config for GPU")
     parser.add_argument("--output", default="/app/ocr_config.yaml", help="Output config path")
     
     args = parser.parse_args()
@@ -160,5 +168,6 @@ if __name__ == "__main__":
         enable_mkldnn=enable_mkldnn,
         det_limit_side_len=getattr(args, 'det_limit_side_len', None),
         precision=getattr(args, 'precision', None),
+        use_gpu=getattr(args, 'use_gpu', False),
         output_path=args.output,
     )
