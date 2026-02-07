@@ -29,12 +29,14 @@ echo "Detected CPU cores: $DETECTED_CORES"
 echo "CPU Threads: $CPU_THREADS (auto-detected: $DETECTED_CORES)"
 echo "MKLDNN Enabled: $MKLDNN_ENABLED"
 echo "MKLDNN Cache Capacity: $MKLDNN_CACHE (auto-optimized)"
+echo "HPI Backend: ${PADDLE_HPI_BACKEND:-paddle} (paddle|openvino|onnxruntime|auto)"
 echo "================================"
 
 # Export for Python processes
 export PADDLE_CPU_THREADS=$CPU_THREADS
 export FLAGS_use_mkldnn=$MKLDNN_ENABLED
 export PADDLE_MKLDNN_CACHE_CAPACITY=$MKLDNN_CACHE
+export PADDLE_HPI_BACKEND=${PADDLE_HPI_BACKEND:-paddle}
 
 # Use custom config if present, else default OCR pipeline
 if [ -f /app/ocr_config.yaml ]; then

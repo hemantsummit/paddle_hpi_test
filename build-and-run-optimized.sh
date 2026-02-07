@@ -10,6 +10,7 @@ PORT="${PORT:-8000}"
 CPU_THREADS="${PADDLE_CPU_THREADS:-$(nproc 2>/dev/null || echo 8)}"
 MKLDNN_CACHE="${PADDLE_MKLDNN_CACHE_CAPACITY:-30}"
 ENABLE_MKLDNN="${FLAGS_use_mkldnn:-1}"
+HPI_BACKEND="${PADDLE_HPI_BACKEND:-paddle}"
 
 # Config file paths
 CONFIG_DIR="./config"
@@ -87,6 +88,7 @@ docker run -d \
   -e PADDLE_CPU_THREADS="$CPU_THREADS" \
   -e PADDLE_MKLDNN_CACHE_CAPACITY="$MKLDNN_CACHE" \
   -e FLAGS_use_mkldnn="$ENABLE_MKLDNN" \
+  -e PADDLE_HPI_BACKEND="$HPI_BACKEND" \
   $VOLUME_MOUNT \
   "$IMAGE_NAME"
 
@@ -127,6 +129,7 @@ echo "Performance settings:"
 echo "  CPU Threads: $CPU_THREADS"
 echo "  MKLDNN Cache: $MKLDNN_CACHE"
 echo "  MKLDNN Enabled: $ENABLE_MKLDNN"
+echo "  HPI Backend: $HPI_BACKEND"
 echo ""
 echo "Useful commands:"
 echo "  View logs: docker logs -f $CONTAINER_NAME"

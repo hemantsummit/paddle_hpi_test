@@ -126,6 +126,11 @@ docker run -p 8000:8000 \
 - **PADDLE_CPU_THREADS**: Number of CPU threads (default: 10, recommend: number of cores)
 - **FLAGS_use_mkldnn**: Enable MKLDNN acceleration (default: 1, Intel CPUs benefit most)
 - **PADDLE_MKLDNN_CACHE_CAPACITY**: MKLDNN cache size (default: 20, increase for batch processing)
+- **PADDLE_HPI_BACKEND**: HPI inference backend (default: paddle). Options:
+  - `paddle`: Paddle Inference + MKLDNN
+  - `openvino`: Intel OpenVINO (often faster on Intel CPUs)
+  - `onnxruntime`: ONNX Runtime (cross-platform)
+  - `auto`: Let PaddleX choose best backend per model
 
 ### Test Performance
 
