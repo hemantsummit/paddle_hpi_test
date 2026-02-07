@@ -14,7 +14,7 @@ def update_config(config_path="/app/ocr_config.yaml"):
     cpu_threads = int(os.environ.get("PADDLE_CPU_THREADS", "10"))
     mkldnn_cache = int(os.environ.get("PADDLE_MKLDNN_CACHE_CAPACITY", "20"))
     enable_mkldnn = os.environ.get("FLAGS_use_mkldnn", "1") == "1"
-    det_limit_side_len = int(os.environ.get("PADDLE_DET_LIMIT_SIDE_LEN", "768"))
+    det_limit_side_len = int(os.environ.get("PADDLE_DET_LIMIT_SIDE_LEN", "960"))
     precision = os.environ.get("PADDLE_PRECISION", "fp16")
     if precision not in ("fp32", "fp16", "int8"):
         precision = "fp16"

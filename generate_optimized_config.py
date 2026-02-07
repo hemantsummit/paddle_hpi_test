@@ -26,7 +26,7 @@ def generate_config(
     cpu_threads = cpu_threads or int(os.environ.get("PADDLE_CPU_THREADS", "10"))
     mkldnn_cache = mkldnn_cache or int(os.environ.get("PADDLE_MKLDNN_CACHE_CAPACITY", "20"))
     enable_mkldnn = enable_mkldnn if enable_mkldnn is not None else os.environ.get("FLAGS_use_mkldnn", "1") == "1"
-    det_limit_side_len = det_limit_side_len or int(os.environ.get("PADDLE_DET_LIMIT_SIDE_LEN", "768"))
+    det_limit_side_len = det_limit_side_len or int(os.environ.get("PADDLE_DET_LIMIT_SIDE_LEN", "960"))
     precision = precision or os.environ.get("PADDLE_PRECISION", "fp16")
     if precision not in ("fp32", "fp16", "int8"):
         precision = "fp16"
@@ -40,7 +40,7 @@ def generate_config(
     print(f"  Output: {output_path}")
     
     # Create PaddleOCR instance: server models (default) for maximum accuracy
-    # text_det_limit_side_len=768 speeds up detection (default 960)
+    # text_det_limit_side_len=960 (PaddleOCR default for accuracy)
     ocr = PaddleOCR(
         use_doc_orientation_classify=True,
         use_doc_unwarping=False,
@@ -140,7 +140,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate optimized OCR config")
     parser.add_argument("--cpu-threads", type=int, help="Number of CPU threads (default: 10)")
     parser.add_argument("--mkldnn-cache", type=int, help="MKLDNN cache capacity (default: 20)")
-    parser.add_argument("--det-limit-side-len", type=int, help="Detection image side limit (default: 768, lower=faster)")
+    parser.add_argument("--det-limit-side-len", type=int, help="Detection image side limit (default: 960)")
     parser.add_argument("--precision", choices=["fp32", "fp16", "int8"], help="Inference precision (default: fp16)")
     parser.add_argument("--enable-mkldnn", action="store_true", help="Enable MKLDNN (default: True)")
     parser.add_argument("--disable-mkldnn", action="store_true", help="Disable MKLDNN")

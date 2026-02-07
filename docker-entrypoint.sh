@@ -29,7 +29,7 @@ echo "Detected CPU cores: $DETECTED_CORES"
 echo "CPU Threads: $CPU_THREADS (auto-detected: $DETECTED_CORES)"
 echo "MKLDNN Enabled: $MKLDNN_ENABLED"
 echo "MKLDNN Cache Capacity: $MKLDNN_CACHE (auto-optimized)"
-echo "Det Limit Side Len: ${PADDLE_DET_LIMIT_SIDE_LEN:-768}"
+echo "Det Limit Side Len: ${PADDLE_DET_LIMIT_SIDE_LEN:-960}"
 echo "Precision: ${PADDLE_PRECISION:-fp16}"
 echo "HPI Backend: ${PADDLE_HPI_BACKEND:-paddle} (paddle|openvino|onnxruntime|auto)"
 echo "================================"
@@ -38,7 +38,7 @@ echo "================================"
 export PADDLE_CPU_THREADS=$CPU_THREADS
 export FLAGS_use_mkldnn=$MKLDNN_ENABLED
 export PADDLE_MKLDNN_CACHE_CAPACITY=$MKLDNN_CACHE
-export PADDLE_DET_LIMIT_SIDE_LEN=${PADDLE_DET_LIMIT_SIDE_LEN:-768}
+export PADDLE_DET_LIMIT_SIDE_LEN=${PADDLE_DET_LIMIT_SIDE_LEN:-960}
 export PADDLE_PRECISION=${PADDLE_PRECISION:-fp16}
 export PADDLE_HPI_BACKEND=${PADDLE_HPI_BACKEND:-paddle}
 

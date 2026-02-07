@@ -126,7 +126,7 @@ docker run -p 8000:8000 \
 - **PADDLE_CPU_THREADS**: Number of CPU threads (default: 10, recommend: number of cores)
 - **FLAGS_use_mkldnn**: Enable MKLDNN acceleration (default: 1, Intel CPUs benefit most)
 - **PADDLE_MKLDNN_CACHE_CAPACITY**: MKLDNN cache size (default: 20, increase for batch processing)
-- **PADDLE_DET_LIMIT_SIDE_LEN**: Detection image side limit (default: 768, lower=faster, 960=original)
+- **PADDLE_DET_LIMIT_SIDE_LEN**: Detection image side limit (default: 960)
 - **PADDLE_PRECISION**: Inference precision (default: fp16 for speed, use fp32 for max accuracy)
 - **PADDLE_HPI_BACKEND**: HPI inference backend (default: paddle). Options:
   - `paddle`: Paddle Inference + MKLDNN

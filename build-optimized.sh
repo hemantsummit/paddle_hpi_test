@@ -8,7 +8,7 @@ IMAGE_NAME="${IMAGE_NAME:-paddleocr-api}"
 CPU_THREADS="${PADDLE_CPU_THREADS:-$(nproc 2>/dev/null || echo 8)}"
 MKLDNN_CACHE="${PADDLE_MKLDNN_CACHE_CAPACITY:-30}"
 ENABLE_MKLDNN="${FLAGS_use_mkldnn:-1}"
-DET_LIMIT_SIDE_LEN="${PADDLE_DET_LIMIT_SIDE_LEN:-768}"
+DET_LIMIT_SIDE_LEN="${PADDLE_DET_LIMIT_SIDE_LEN:-960}"
 PRECISION="${PADDLE_PRECISION:-fp16}"
 
 # Platform detection for local ARM64 builds (e.g., Apple Silicon)
