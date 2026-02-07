@@ -8,6 +8,8 @@ IMAGE_NAME="${IMAGE_NAME:-paddleocr-api}"
 CPU_THREADS="${PADDLE_CPU_THREADS:-$(nproc 2>/dev/null || echo 8)}"
 MKLDNN_CACHE="${PADDLE_MKLDNN_CACHE_CAPACITY:-30}"
 ENABLE_MKLDNN="${FLAGS_use_mkldnn:-1}"
+DET_LIMIT_SIDE_LEN="${PADDLE_DET_LIMIT_SIDE_LEN:-768}"
+PRECISION="${PADDLE_PRECISION:-fp16}"
 
 # Platform detection for local ARM64 builds (e.g., Apple Silicon)
 PLATFORM_FLAG=""
@@ -34,6 +36,8 @@ echo "=== Generating Optimized Config ==="
 echo "CPU Threads: $CPU_THREADS"
 echo "MKLDNN Cache Capacity: $MKLDNN_CACHE"
 echo "MKLDNN Enabled: $ENABLE_MKLDNN"
+echo "Det Limit Side Len: $DET_LIMIT_SIDE_LEN"
+echo "Precision: $PRECISION"
 echo ""
 
 # Create config directory
@@ -45,11 +49,15 @@ docker run --rm $PLATFORM_FLAG \
   -e PADDLE_CPU_THREADS="$CPU_THREADS" \
   -e PADDLE_MKLDNN_CACHE_CAPACITY="$MKLDNN_CACHE" \
   -e FLAGS_use_mkldnn="$ENABLE_MKLDNN" \
+  -e PADDLE_DET_LIMIT_SIDE_LEN="$DET_LIMIT_SIDE_LEN" \
+  -e PADDLE_PRECISION="$PRECISION" \
   -v "$(pwd)/$CONFIG_DIR:/config" \
   "$IMAGE_NAME" \
   python generate_optimized_config.py \
     --cpu-threads "$CPU_THREADS" \
     --mkldnn-cache "$MKLDNN_CACHE" \
+    --det-limit-side-len "$DET_LIMIT_SIDE_LEN" \
+    --precision "$PRECISION" \
     $([ "$ENABLE_MKLDNN" = "1" ] && echo "--enable-mkldnn" || echo "--disable-mkldnn") \
     --output /config/ocr_config.yaml
 
@@ -67,5 +75,7 @@ echo "Performance settings:"
 echo "  CPU Threads: $CPU_THREADS"
 echo "  MKLDNN Cache: $MKLDNN_CACHE"
 echo "  MKLDNN Enabled: $ENABLE_MKLDNN"
+echo "  Det Limit Side Len: $DET_LIMIT_SIDE_LEN"
+echo "  Precision: $PRECISION"
 echo ""
 echo "Next step: Run './run-optimized.sh' to start the container"

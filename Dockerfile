@@ -26,6 +26,8 @@ RUN paddlex --install serving
 ARG PADDLE_CPU_THREADS=10
 ARG FLAGS_use_mkldnn=1
 ARG PADDLE_MKLDNN_CACHE_CAPACITY=20
+ARG PADDLE_DET_LIMIT_SIDE_LEN=768
+ARG PADDLE_PRECISION=fp16
 
 # Set as ENV so they're available to the RUN command below and at runtime
 # Note: FLAGS_use_mkldnn=0 was set to avoid Paddle 3.3+ bug, but PaddleX may override
@@ -33,20 +35,25 @@ ARG PADDLE_MKLDNN_CACHE_CAPACITY=20
 ENV FLAGS_use_mkldnn=${FLAGS_use_mkldnn}
 ENV PADDLE_CPU_THREADS=${PADDLE_CPU_THREADS}
 ENV PADDLE_MKLDNN_CACHE_CAPACITY=${PADDLE_MKLDNN_CACHE_CAPACITY}
+ENV PADDLE_DET_LIMIT_SIDE_LEN=${PADDLE_DET_LIMIT_SIDE_LEN}
+ENV PADDLE_PRECISION=${PADDLE_PRECISION}
 
-# OCR config: server models + all preprocessing enabled for maximum accuracy
+# OCR config: server models + all preprocessing enabled; det_limit_side_len=768, precision=fp16 for speed
 # Performance tuning: reads from ENV variables set above (can be overridden at build/runtime)
 RUN python -c "\
 from paddleocr import PaddleOCR; \
 import os; \
 cpu_threads = int(os.environ.get('PADDLE_CPU_THREADS', '10')); \
 enable_mkldnn = os.environ.get('FLAGS_use_mkldnn', '1') == '1'; \
+det_limit = int(os.environ.get('PADDLE_DET_LIMIT_SIDE_LEN', '768')); \
 p = PaddleOCR( \
     use_doc_orientation_classify=True, \
     use_doc_unwarping=True, \
     use_textline_orientation=True, \
     cpu_threads=cpu_threads, \
     enable_mkldnn=enable_mkldnn, \
+    text_det_limit_side_len=det_limit, \
+    text_det_limit_type='max', \
 ); \
 p.export_paddlex_config_to_yaml('/app/ocr_config.yaml')"
 

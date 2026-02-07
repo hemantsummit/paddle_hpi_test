@@ -14,6 +14,10 @@ def update_config(config_path="/app/ocr_config.yaml"):
     cpu_threads = int(os.environ.get("PADDLE_CPU_THREADS", "10"))
     mkldnn_cache = int(os.environ.get("PADDLE_MKLDNN_CACHE_CAPACITY", "20"))
     enable_mkldnn = os.environ.get("FLAGS_use_mkldnn", "1") == "1"
+    det_limit_side_len = int(os.environ.get("PADDLE_DET_LIMIT_SIDE_LEN", "768"))
+    precision = os.environ.get("PADDLE_PRECISION", "fp16")
+    if precision not in ("fp32", "fp16", "int8"):
+        precision = "fp16"
     
     if not os.path.exists(config_path):
         print(f"Warning: Config file not found: {config_path}")
@@ -45,6 +49,23 @@ def update_config(config_path="/app/ocr_config.yaml"):
             if section.get('mkldnn_cache_capacity') != mkldnn_cache:
                 section['mkldnn_cache_capacity'] = mkldnn_cache
                 updated = True
+            
+            # Update precision (fp16 for speed, fp32 for max accuracy)
+            if section.get('precision') != precision:
+                section['precision'] = precision
+                updated = True
+        
+        def update_det_section(section):
+            """Update detection-specific settings."""
+            nonlocal updated
+            if not isinstance(section, dict):
+                return
+            if section.get('det_limit_side_len') != det_limit_side_len:
+                section['det_limit_side_len'] = det_limit_side_len
+                updated = True
+            if section.get('det_limit_type') != 'max':
+                section['det_limit_type'] = 'max'
+                updated = True
         
         # Update Global section if it exists (old PaddleOCR structure)
         if 'Global' in config:
@@ -54,6 +75,8 @@ def update_config(config_path="/app/ocr_config.yaml"):
         for section_name in ['Det', 'Rec', 'Cls']:
             if section_name in config:
                 update_section(config[section_name])
+                if section_name == 'Det':
+                    update_det_section(config[section_name])
         
         # Update SubModules structure (PaddleX pipeline structure)
         # These settings should be in inference_config sections for each module
@@ -70,6 +93,10 @@ def update_config(config_path="/app/ocr_config.yaml"):
                     
                     # Also update the module config directly (for backward compatibility)
                     update_section(module_config)
+                    
+                    # Detection modules: set det_limit_side_len
+                    if 'det' in module_name.lower() or 'Det' in str(module_config.get('module_name', '')):
+                        update_det_section(module_config)
                     
                     # Check other nested config sections
                     for nested_key in ['predictor_config', 'config']:
@@ -91,10 +118,10 @@ def update_config(config_path="/app/ocr_config.yaml"):
         if updated:
             with open(config_path, 'w') as f:
                 yaml.dump(config, f, default_flow_style=False, sort_keys=False)
-            print(f"✓ Updated config: cpu_threads={cpu_threads}, mkldnn_cache={mkldnn_cache}, enable_mkldnn={enable_mkldnn}")
+            print(f"✓ Updated config: cpu_threads={cpu_threads}, mkldnn_cache={mkldnn_cache}, det_limit_side_len={det_limit_side_len}, precision={precision}")
             return True
         else:
-            print(f"✓ Config already has correct values: cpu_threads={cpu_threads}, mkldnn_cache={mkldnn_cache}, enable_mkldnn={enable_mkldnn}")
+            print(f"✓ Config already has correct values: cpu_threads={cpu_threads}, mkldnn_cache={mkldnn_cache}, det_limit_side_len={det_limit_side_len}, precision={precision}")
             return True
             
     except Exception as e:

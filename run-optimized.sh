@@ -10,6 +10,8 @@ PORT="${PORT:-8000}"
 CPU_THREADS="${PADDLE_CPU_THREADS:-$(nproc 2>/dev/null || echo 8)}"
 MKLDNN_CACHE="${PADDLE_MKLDNN_CACHE_CAPACITY:-30}"
 ENABLE_MKLDNN="${FLAGS_use_mkldnn:-1}"
+DET_LIMIT_SIDE_LEN="${PADDLE_DET_LIMIT_SIDE_LEN:-768}"
+PRECISION="${PADDLE_PRECISION:-fp16}"
 HPI_BACKEND="${PADDLE_HPI_BACKEND:-paddle}"
 
 # Config file paths
@@ -54,6 +56,8 @@ echo "Starting container with performance settings:"
 echo "  CPU Threads: $CPU_THREADS"
 echo "  MKLDNN Cache: $MKLDNN_CACHE"
 echo "  MKLDNN Enabled: $ENABLE_MKLDNN"
+echo "  Det Limit Side Len: $DET_LIMIT_SIDE_LEN"
+echo "  Precision: $PRECISION"
 echo "  HPI Backend: $HPI_BACKEND (paddle|openvino|onnxruntime|auto)"
 echo ""
 
@@ -63,6 +67,8 @@ docker run -d \
   -e PADDLE_CPU_THREADS="$CPU_THREADS" \
   -e PADDLE_MKLDNN_CACHE_CAPACITY="$MKLDNN_CACHE" \
   -e FLAGS_use_mkldnn="$ENABLE_MKLDNN" \
+  -e PADDLE_DET_LIMIT_SIDE_LEN="$DET_LIMIT_SIDE_LEN" \
+  -e PADDLE_PRECISION="$PRECISION" \
   -e PADDLE_HPI_BACKEND="$HPI_BACKEND" \
   $VOLUME_MOUNT \
   "$IMAGE_NAME"
