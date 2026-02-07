@@ -9,7 +9,7 @@ From your logs, the current settings are:
 - **mkldnn_cache_capacity**: 10
 - **run_mode**: mkldnn
 - **device_type**: cpu
-- **Models**: PP-OCRv5_server_rec (server models - larger, more accurate)
+- **Models**: PP-OCRv5_server_* (server models for maximum accuracy)
 
 ## Performance Tuning Options
 
@@ -63,44 +63,28 @@ export FLAGS_use_mkldnn=1
 
 **Impact**: Graph optimizations can provide 10-30% speedup.
 
-### 6. Model Selection
-
-**Current**: Server models (PP-OCRv5_server_*)  
-**Options**:
-- **Server models**: Larger, more accurate, slower
-- **Mobile models**: Smaller, faster, slightly less accurate
-
-**Recommendation**: If speed is critical, consider mobile models:
-```python
-PaddleOCR(
-    det_model_dir='mobile',
-    rec_model_dir='mobile',
-    cls_model_dir='mobile'
-)
-```
-
-### 7. Batch Processing
+### 6. Batch Processing
 
 **Current**: Single image processing  
 **Recommendation**: Process multiple images in batch if possible
 
 **Impact**: Better CPU utilization, especially with higher thread counts.
 
-### 8. Image Preprocessing
+### 7. Image Preprocessing
 
-**Options**: Disable unnecessary preprocessing steps
-- `use_doc_orientation_classify=False` ✓ (already disabled)
-- `use_doc_unwarping=False` ✓ (already disabled)
-- `use_textline_orientation=False` ✓ (already disabled)
+**Current**: All preprocessing enabled for maximum accuracy
+- `use_doc_orientation_classify=True` – document rotation correction
+- `use_doc_unwarping=True` – curved document straightening
+- `use_textline_orientation=True` – sideways text handling
 
-### 9. Memory Optimization
+### 8. Memory Optimization
 
 **Options**:
 - Reduce image size before processing (resize large images)
 - Use image compression
 - Limit concurrent requests
 
-### 10. High-Performance Inference (HPI)
+### 9. High-Performance Inference (HPI)
 
 **Current**: Using Paddle Inference backend  
 **Recommendation**: Use HPI when available (requires native Linux x86_64)
@@ -172,7 +156,6 @@ time curl -X POST http://localhost:8000/ocr -F "image=@test_image.png"
 | Increase cpu_threads | 1.5-2x | Up to ~2x cores |
 | Increase cache capacity | 1.1-1.3x | Batch processing |
 | Use fp16 precision | 1.5-2x | If supported |
-| Use mobile models | 2-3x | Accuracy tradeoff |
 | Enable HPI | 2-3x | Requires native Linux x86_64 |
 
 ## Troubleshooting
@@ -189,7 +172,6 @@ time curl -X POST http://localhost:8000/ocr -F "image=@test_image.png"
 
 ### Memory Issues
 - Reduce `mkldnn_cache_capacity`
-- Use smaller models (mobile)
 - Process images in smaller batches
 
 ## Monitoring

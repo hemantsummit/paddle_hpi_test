@@ -34,7 +34,7 @@ ENV FLAGS_use_mkldnn=${FLAGS_use_mkldnn}
 ENV PADDLE_CPU_THREADS=${PADDLE_CPU_THREADS}
 ENV PADDLE_MKLDNN_CACHE_CAPACITY=${PADDLE_MKLDNN_CACHE_CAPACITY}
 
-# OCR config: disable doc orientation/unwarping/textline_ori (keep server models)
+# OCR config: server models + all preprocessing enabled for maximum accuracy
 # Performance tuning: reads from ENV variables set above (can be overridden at build/runtime)
 RUN python -c "\
 from paddleocr import PaddleOCR; \
@@ -42,9 +42,9 @@ import os; \
 cpu_threads = int(os.environ.get('PADDLE_CPU_THREADS', '10')); \
 enable_mkldnn = os.environ.get('FLAGS_use_mkldnn', '1') == '1'; \
 p = PaddleOCR( \
-    use_doc_orientation_classify=False, \
-    use_doc_unwarping=False, \
-    use_textline_orientation=False, \
+    use_doc_orientation_classify=True, \
+    use_doc_unwarping=True, \
+    use_textline_orientation=True, \
     cpu_threads=cpu_threads, \
     enable_mkldnn=enable_mkldnn, \
 ); \

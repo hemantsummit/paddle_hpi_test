@@ -31,15 +31,14 @@ def generate_config(
     print(f"  MKLDNN Cache Capacity: {mkldnn_cache}")
     print(f"  Output: {output_path}")
     
-    # Create PaddleOCR instance with optimized settings
+    # Create PaddleOCR instance: server models (default) for maximum accuracy
+    # All preprocessing enabled: orientation, unwarping, textline orientation
     ocr = PaddleOCR(
-        use_doc_orientation_classify=False,
-        use_doc_unwarping=False,
-        use_textline_orientation=False,
+        use_doc_orientation_classify=True,
+        use_doc_unwarping=True,
+        use_textline_orientation=True,
         cpu_threads=cpu_threads,
         enable_mkldnn=enable_mkldnn,
-        # Note: mkldnn_cache_capacity may need to be set via Config
-        # PaddleOCR API may not expose all options directly
     )
     
     # Export config

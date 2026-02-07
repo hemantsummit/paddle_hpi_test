@@ -73,16 +73,13 @@ time curl -X POST http://localhost:8000/ocr -F "image=@test.png"
 
 ## Other Options to Explore
 
-1. **Use Mobile Models**: Faster but less accurate
-   - Modify Dockerfile to use mobile models instead of server models
-
-2. **Enable HPI**: 2-3x faster (requires native Linux x86_64)
+1. **Enable HPI**: 2-3x faster (requires native Linux x86_64)
    - Build on Linux x86_64: `./build-linux.sh`
 
-3. **Reduce Image Size**: Preprocess images to smaller dimensions
+2. **Reduce Image Size**: Preprocess images to smaller dimensions
    - Add image resizing before OCR
 
-4. **Batch Processing**: Process multiple images together
+3. **Batch Processing**: Process multiple images together
    - Modify API to accept multiple images
 
 See [PERFORMANCE_TUNING.md](PERFORMANCE_TUNING.md) for detailed options.

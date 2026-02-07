@@ -109,4 +109,3 @@ The YAML config file is still being updated for compatibility, but the primary m
 - MKLDNN being enabled (which is working)
 - HPI config settings (cpu_threads, mkldnn_cache_capacity)
 - Other YAML settings that PaddleX does read
-- Model selection (server vs mobile models)

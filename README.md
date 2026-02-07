@@ -106,7 +106,7 @@ On Apple Silicon, `ultra-infer-python` has no arm64 wheel. Use `build-linux.sh` 
 
 ## Performance Tuning
 
-See [PERFORMANCE_TUNING.md](PERFORMANCE_TUNING.md) for detailed optimization options.
+See [docs/PERFORMANCE_TUNING.md](docs/PERFORMANCE_TUNING.md) for detailed optimization options.
 
 ### Quick Performance Boost
 
