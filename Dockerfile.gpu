@@ -26,11 +26,8 @@ RUN python3 -m pip install --no-cache-dir \
     "paddleocr[all]>=3.0.0" \
     "paddlex[serving]>=3.2.0"
 
-# HPI GPU plugin (TensorRT, ONNX Runtime backends for GPU)
-RUN paddlex --install hpi-gpu
-
-# Paddle2ONNX (recommended before HPI - enables model conversion for backends)
-RUN paddlex --install paddle2onnx || true
+# HPI GPU + Paddle2ONNX installed at runtime (build has no GPU / libcuda.so.1)
+# See docker-entrypoint-gpu.sh
 
 # ocr_api proxy deps
 RUN python3 -m pip install --no-cache-dir \

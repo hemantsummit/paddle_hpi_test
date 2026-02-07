@@ -5,6 +5,14 @@ set -e
 
 PADDLEX_PORT=8080
 
+# Install HPI GPU + Paddle2ONNX at runtime (libcuda.so.1 available with --gpus all)
+# Build-time install fails: ImportError: libcuda.so.1: cannot open shared object file
+if ! python3 -m pip show ultra-infer-python >/dev/null 2>&1; then
+  echo "Installing HPI GPU plugin (first run only)..."
+  PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK=True paddlex --install hpi-gpu 2>/dev/null || true
+  PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK=True paddlex --install paddle2onnx 2>/dev/null || true
+fi
+
 # Default OCR pipeline (no custom config)
 PIPELINE_ARG="OCR"
 
