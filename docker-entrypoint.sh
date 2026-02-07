@@ -50,34 +50,36 @@ else
   echo "Using default OCR pipeline"
 fi
 
-# Create PaddlePaddle option string for performance tuning
-# Format: --pp_option "{'cpu_threads': N, 'mkldnn_cache_capacity': M}"
-# Use Python to ensure proper formatting (Python dict string, not JSON)
-PP_OPTION_STR=$(python -c "
-import os
-cpu_threads = int(os.environ.get('PADDLE_CPU_THREADS', '10'))
-mkldnn_cache = int(os.environ.get('PADDLE_MKLDNN_CACHE_CAPACITY', '20'))
-print(f\"{{'cpu_threads': {cpu_threads}, 'mkldnn_cache_capacity': {mkldnn_cache}}}\")
-")
-
-echo "PaddlePaddle options: $PP_OPTION_STR"
-
 # Use HPI only when ultra-infer-python is installed (native Linux x86_64)
 if pip show ultra-infer-python >/dev/null 2>&1; then
   echo "Using HPI (high-performance backend)"
   HPIP_FLAG="--use_hpip"
+  # Create HPI config for performance tuning (cpu_threads, mkldnn_cache_capacity)
+  # PaddleX does NOT support --pp_option; use --hpi_config with JSON string (per docs)
+  echo "Creating HPI config..."
+  python create_hpi_config.py /app/hpi_config.json || echo "Warning: Could not create HPI config"
+  if [ -f /app/hpi_config.json ]; then
+    # PaddleX expects --hpi_config as JSON string (compact format for shell safety)
+    HPI_CONFIG_JSON=$(cat /app/hpi_config.json)
+    HPI_CONFIG_ARG="--hpi_config $HPI_CONFIG_JSON"
+    echo "Using HPI config:"
+    cat /app/hpi_config.json
+  else
+    HPI_CONFIG_ARG=""
+  fi
 else
   echo "Using Paddle Inference backend (HPI not available)"
   HPIP_FLAG=""
+  HPI_CONFIG_ARG=""
 fi
 
 # Debug: Show the exact command being executed
 echo "Executing PaddleX command:"
-echo "  paddlex --serve --pipeline $PIPELINE_ARG --device cpu $HPIP_FLAG --pp_option \"$PP_OPTION_STR\" --port $PADDLEX_PORT --host 0.0.0.0"
+echo "  paddlex --serve --pipeline $PIPELINE_ARG --device cpu $HPIP_FLAG $HPI_CONFIG_ARG --port $PADDLEX_PORT --host 0.0.0.0"
 echo ""
 
-# Pass --pp_option and its value as separate arguments (properly quoted)
-paddlex --serve --pipeline "$PIPELINE_ARG" --device cpu $HPIP_FLAG --pp_option "$PP_OPTION_STR" --port "$PADDLEX_PORT" --host 0.0.0.0 &
+# Note: PaddleX does not support --pp_option; use --hpi_config when HPI is available
+paddlex --serve --pipeline "$PIPELINE_ARG" --device cpu $HPIP_FLAG $HPI_CONFIG_ARG --port "$PADDLEX_PORT" --host 0.0.0.0 &
 PADDLEX_PID=$!
 
 echo "Waiting for PaddleX serving on port $PADDLEX_PORT..."

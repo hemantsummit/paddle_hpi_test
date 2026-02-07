@@ -15,19 +15,21 @@ def create_hpi_config(output_path="/app/hpi_config.json"):
     mkldnn_cache = int(os.environ.get("PADDLE_MKLDNN_CACHE_CAPACITY", "20"))
     enable_mkldnn = os.environ.get("FLAGS_use_mkldnn", "1") == "1"
     
-    # HPI config structure based on PaddleX documentation
+    # HPI config structure per PaddleX High-Performance Inference docs:
+    # backend_config overrides defaults; for "paddle" backend, use PaddlePredictorOption attributes
     hpi_config = {
-        "cpu_threads": cpu_threads,
-        "mkldnn_cache_capacity": mkldnn_cache,
-        "enable_mkldnn": enable_mkldnn,
-        # Additional HPI settings that might be useful
-        "ir_optim": True,
-        "enable_memory_optim": True,
+        "backend": "paddle",
+        "backend_config": {
+            "cpu_threads": cpu_threads,
+            "mkldnn_cache_capacity": mkldnn_cache,
+            "enable_mkldnn": enable_mkldnn,
+        },
     }
     
     try:
         with open(output_path, 'w') as f:
-            json.dump(hpi_config, f, indent=2)
+            # Compact JSON (no spaces) for safe shell pass-through to --hpi_config
+            json.dump(hpi_config, f, separators=(',', ':'))
         
         print(f"✓ Created HPI config: {output_path}")
         print(f"  cpu_threads: {cpu_threads}")
