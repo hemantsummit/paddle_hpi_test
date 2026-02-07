@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
 """
-Create HPI (High-Performance Inference) config file for PaddleX serving.
+Create HPI (High-Performance Inference) config for PaddleX serving.
 This config is used with --hpi_config option when --use_hpip is enabled.
+
+PaddleX CLI uses ast.literal_eval() to parse --hpi_config, so we must output
+Python literal format (True/False, not JSON true/false).
 """
 
 import os
-import json
 import sys
 
 def create_hpi_config(output_path="/app/hpi_config.json"):
-    """Create HPI config JSON file from environment variables."""
+    """Create HPI config as Python literal string from environment variables."""
     
     cpu_threads = int(os.environ.get("PADDLE_CPU_THREADS", "10"))
     mkldnn_cache = int(os.environ.get("PADDLE_MKLDNN_CACHE_CAPACITY", "20"))
@@ -27,9 +29,10 @@ def create_hpi_config(output_path="/app/hpi_config.json"):
     }
     
     try:
+        # PaddleX uses ast.literal_eval() - requires Python format (True not true)
+        hpi_config_str = str(hpi_config)
         with open(output_path, 'w') as f:
-            # Compact JSON (no spaces) for safe shell pass-through to --hpi_config
-            json.dump(hpi_config, f, separators=(',', ':'))
+            f.write(hpi_config_str)
         
         print(f"✓ Created HPI config: {output_path}")
         print(f"  cpu_threads: {cpu_threads}")
