@@ -19,6 +19,8 @@ export FLAGS_use_mkldnn=${FLAGS_use_mkldnn:-1}
 export PADDLE_DET_LIMIT_SIDE_LEN=$DET_LIMIT
 export PADDLE_PRECISION=$PRECISION
 export PADDLE_USE_GPU=1
+# Skip model hoster connectivity check during config generation (speeds up startup)
+export PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK=True
 
 echo "=== Performance Configuration (GPU) ==="
 echo "CPU Threads: $CPU_THREADS"

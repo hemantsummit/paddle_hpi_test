@@ -44,11 +44,13 @@ def generate_config(
     
     # Create PaddleOCR instance: server models (default) for maximum accuracy
     # text_det_limit_side_len=960 (PaddleOCR default for accuracy)
+    # PaddleOCR 3.x uses device="gpu:0" or "cpu", not use_gpu
+    device = "gpu:0" if use_gpu else "cpu"
     ocr = PaddleOCR(
+        device=device,
         use_doc_orientation_classify=True,
         use_doc_unwarping=False,
         use_textline_orientation=False,
-        use_gpu=use_gpu,
         cpu_threads=cpu_threads,
         enable_mkldnn=enable_mkldnn,
         text_det_limit_side_len=det_limit_side_len,
